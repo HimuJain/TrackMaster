@@ -166,8 +166,9 @@ class MusicMongoClient:
         if len(results) == 0:
             return {"matches":"[]", "message":"No good matches found!"}
         
+        
         else:
-            return {"matches":f"{results}", "message":"These sound similar", "file_paths":"{file_paths}"}
+            return {"matches":f"{results}", "message":"These sound similar...", "file_paths":f"{file_paths}"}
         # query for those indices in our database.
         # file and class
             

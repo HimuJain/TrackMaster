@@ -95,8 +95,6 @@ class AudioFeatureExtractor:
             n_fft=self.n_fft,
             hop_length=self.hop_length
         )
-        delta_mfccs = librosa.feature.delta(mfccs)
-        delta2_mfccs = librosa.feature.delta(mfccs, order=2)
         
         # --- Timbre Features ---
         
@@ -222,20 +220,18 @@ class AudioFeatureExtractor:
     
     def create_feature_vector(self, features):
         """
-        Create a flat feature vector from the feature dictionary.
+        flatten the feature dict
         
-        Parameters:
-        -----------
-        features : dict
-            Dictionary of audio features
+        takes:
+            features : dict
+                Dictionary of audio features
             
-        Returns:
-        --------
-        feature_vector : numpy.ndarray
-            Flat feature vector combining all relevant features
+        Returns
+            feature_vector : numpy.ndarray
+                Flat feature vector combining all relevant features
         """
         # Combine all statistical features
-        vectors = [
+        vectors = [ #oof 
             features['mfcc']['mean'],
             features['mfcc']['std'],
             np.array([features['timbre']['centroid_mean']]),

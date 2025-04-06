@@ -25,10 +25,17 @@ def classify_genre():
                 print("processing request...")
                 matches = client.process_vector_request(audio,sampling_rate)
 
+                for file in matches['file_paths']: # file
+                    send_file( # this 
+                        file,
+                        mimetype="audio/wav",
+                        as_attachment=False,  
+                        download_name="audio_sample.wav"
+                    )
 
-                return {"status":"200", "message":f"{matches}"}
+                return {"status":"200", "message":f"{matches['matches']}"}
             else:
-                return {"status":"400","message":"no file found in request."}
+                return {"status":"400","message":"no file found in request!"}
             
         
         return {"status":"401","message":"bad method"}
@@ -41,5 +48,7 @@ def generate_idea():
     if(request.method == 'GET'):
         # we will need data on hand, but this doesn't make sense really.
         print(request)
+
+        raise NotImplementedError("we weren't able to build this, sorry.")
 
     return {"status":"200", "message":"2"}
