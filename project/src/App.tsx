@@ -6,8 +6,6 @@ function App() {
   const [recordingComplete, setRecordingComplete] = useState(false);
   const [audioData, setAudioData] = useState<Blob | null>(null);
   const [timer, setTimer] = useState(0);
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [audioLevels, setAudioLevels] = useState<number[]>(Array(20).fill(0.15));
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -66,24 +64,6 @@ function App() {
         setTimer(prev => prev + 1);
       }, 1000);
 
-      const updateAudioLevel = () => {
-        analyserRef.current?.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((acc, val) => acc + val, 0) / bufferLength;
-        const normalizedLevel = average / 256;
-        setAudioLevel(normalizedLevel);
-        
-        setAudioLevels(prev => {
-          const newLevels = [...prev];
-          for (let i = 0; i < newLevels.length; i++) {
-            const targetHeight = 0.15 + (normalizedLevel * 0.85);
-            newLevels[i] = newLevels[i] + (targetHeight - newLevels[i]) * 0.3;
-          }
-          return newLevels;
-        });
-        
-        animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
-      };
-      updateAudioLevel();
     } catch (err) {
       console.error('Error accessing microphone:', err);
     }
@@ -100,7 +80,6 @@ function App() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      setAudioLevels(Array(20).fill(0.15));
     }
   };
 
@@ -111,7 +90,6 @@ function App() {
     const formData = new FormData();
 
     formData.append("audio", audioData as Blob);
-    formData.append("sample_rate", audioContextRef.current?.sampleRate || 44100);
 
     const response = await fetch("http://127.0.0.1:5000/classify_genre", {
       method: "POST",
@@ -145,7 +123,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#3455d8] to-[#f78436] flex items-center justify-center p-4">
-      <div className="flex flex-col gap-8 w-full max-w-2xl">
+      <div className="flex flex-col gap-8 w-full max-w-64">
         {/* Main Recording Interface */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 flex items-center gap-6">
           {/* Record/Stop Button */}
@@ -163,22 +141,6 @@ function App() {
             )}
           </button>
 
-          {/* Audio Visualization */}
-          <div className="flex-1 h-16 flex items-center justify-center">
-            <div className="flex gap-1 items-center">
-              {audioLevels.map((level, i) => (
-                <div
-                  key={i}
-                  className="w-2 bg-white rounded-full text-black"
-                  // style={{
-                  //   height: `${Math.max(15, level * 100)}%`
-                  // }}
-                >
-                  <p>h</p>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Timer */}
           <div className="w-24 text-center">
