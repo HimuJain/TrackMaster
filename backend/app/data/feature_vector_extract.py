@@ -258,4 +258,4 @@ class AudioFeatureExtractor:
         feature_vector = np.concatenate([v.flatten() for v in vectors])
         print(len(feature_vector))
         
-        return feature_vector 
+        return feature_vector

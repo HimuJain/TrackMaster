@@ -94,40 +94,45 @@ class MusicMongoClient:
                 query_embedding: np array of the extracted features
             that's p much it.
         """
-        print(len(query_embedding))
+        # print(len(query_embedding.tolist()))
 
-        pipeline = [
-            {
-                "$vectorSearch": {
-                    "exact": True,
-                    "index": "vector-index",
-                    "limit": 10,
-                    "numCandidates": 5,
-                    "path": "features",
-                    "queryVector": query_embedding,
-                }
-            },
-            {
-                "$project": {
-                    "file_name": 1, # since we have the files locally loaded, we can just load them from there.
-                    "genre_index": 1,
-                    "score": {"$meta": "vectorSearchScore"},
-                    "_id": 0
-                }
-            }
-        ]
+        
         database = self.mongoose.get_database("Music_Data")
         coll = database.get_collection("Known_Music")
 
+        print("running nearest neighbors")
 
-        nearest_neighbors = coll.aggregate(pipeline)
+        all_match = []
+        for q in [query_embedding]:
+            print(q)
+            pipeline = [
+                {
+                    "$vectorSearch": {
+                        "exact": True,
+                        "index": "vector-index",
+                        "limit": 20,
+                        "path": "features",
+                        "queryVector": q.tolist(),
+                    }
+                },
+                {
+                    "$project":{
+                        "_id":0,
+                        "file_name":1,
+                        "genre_index":1,
+                    }
+                },
+            ]
+            nearest_neighbors = coll.aggregate(pipeline)
+            for n in nearest_neighbors:
+                all_match.append(n)
 
-        return [*nearest_neighbors] # hoping this works to unpack i have no idea.
+        return all_match # hoping this works to unpack i have no idea.
 
 
 
 
-    def process_vector_request(self, audio_file):
+    def process_vector_request(self, audio_file, sampling_rate):
 
         # use the built in stream attribute to read in as a file. pelase sworkd
         audio_array = AudioSegment.from_file(audio_file.stream, format="webm")
@@ -138,13 +143,16 @@ class MusicMongoClient:
 
 
         # before we process the request, extract features from the audio passed in from the client
-        audio_feature_vector = self.extractor.extract_features(audio=audio_array, sr = 22050)
+        audio_feature_vector = self.extractor.extract_features(audio=audio_array, sr = sampling_rate)
 
         result = self.run_query(audio_feature_vector) # this will return 
 
         # we need the GROUND TRUTH CLASSES boss. Maybe as a separate table? Yeah probably
 
-        return result # TODO ==> can we use the id indices to figure out what class these are?
+        print(result)
+
+
+        return self.return_audio_files(result) # TODO ==> can we use the id indices to figure out what class these are?
         # sanity check for now, def nothing will come out of this.
     
 
@@ -153,9 +161,13 @@ class MusicMongoClient:
             Parse the results to send over files to the client to listen to. Suggestions I suppose.
         """
 
+        file_paths = []
 
-
-        return None
+        if len(results) == 0:
+            return {"matches":"[]", "message":"No good matches found!"}
+        
+        else:
+            return {"matches":f"{results}", "message":"These sound similar", "file_paths":"{file_paths}"}
         # query for those indices in our database.
         # file and class
             
