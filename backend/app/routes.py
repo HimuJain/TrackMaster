@@ -1,5 +1,6 @@
-from flask import Flask, Blueprint, request
+from flask import Flask, Blueprint, request, send_file
 from flask_cors import CORS
+
 
 bp = Blueprint('api',__name__)
 
@@ -16,11 +17,14 @@ def classify_genre():
         if(request.method == 'POST'):
             # print(request.json())
             audio = request.files.get('audio')
+            sampling_rate = request.files.get("sample_rate")
+            sampling_rate = sampling_rate if sampling_rate is not None else 44100
             if audio:
                 print(audio)
                 
                 print("processing request...")
-                matches = client.process_vector_request(audio)
+                matches = client.process_vector_request(audio,sampling_rate)
+
 
                 return {"status":"200", "message":f"{matches}"}
             else:
